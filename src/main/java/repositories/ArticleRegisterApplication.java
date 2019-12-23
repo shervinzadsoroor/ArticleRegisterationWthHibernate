@@ -5,6 +5,7 @@ import entities.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
+import javax.persistence.Query;
 import java.util.List;
 import java.util.Scanner;
 
@@ -15,17 +16,18 @@ public class ArticleRegisterApplication {
         ArticleRegisterApplication articleRegisterApplication =
                 new ArticleRegisterApplication();
         String command = null;
-        boolean isLogin = false;
+        // boolean isLogin = false;
+        User user = null;
         while (true) {
-            if (!isLogin) {
+            if (user == null) {
                 System.out.println("what do you want? (sign up | login | show articles): ");
                 command = scanner.nextLine();
                 if (command.equalsIgnoreCase("sign up")) {
                     articleRegisterApplication.signUp();
                 }
                 if (command.equalsIgnoreCase("login")) {
-                    isLogin = articleRegisterApplication.login();
-                    if (isLogin) {
+                    user = articleRegisterApplication.login();
+                    if (user != null) {
                         System.out.println("    LOGIN SUCCESSFUL !!!");
                     } else {
                         System.out.println("    INVALID USERNAME OR PASSWORD !!!");
@@ -35,13 +37,29 @@ public class ArticleRegisterApplication {
                     articleRegisterApplication.showAllArticles();
                 }
             }
-            if (isLogin) {
+            if (user != null) {
                 System.out.println("what do you want? (show | edit | new | change pass | dashboard | logout): ");
                 command = scanner.nextLine();
-                if (command.equalsIgnoreCase("logout")) {
-                    isLogin = false;
-                }
 
+                if (command.equalsIgnoreCase("show")) {
+
+                }
+                if (command.equalsIgnoreCase("edit")) {
+
+                }
+                if (command.equalsIgnoreCase("new")) {
+                    articleRegisterApplication.showListOfCategories();
+                    articleRegisterApplication.createNewArticle();
+                }
+                if (command.equalsIgnoreCase("change pass")) {
+                    articleRegisterApplication.changePassword(user.getUsername());
+                }
+                if (command.equalsIgnoreCase("dashboard")) {
+
+                }
+                if (command.equalsIgnoreCase("logout")) {
+                    user = null;
+                }
             }
 
         }
@@ -58,16 +76,14 @@ public class ArticleRegisterApplication {
         //====================================
         System.out.println("username: ");
         String username = scanner.nextLine();
-        System.out.println("password: ");
-        String password = scanner.nextLine();
+
         System.out.println("national code: ");
         String nationalCode = scanner.nextLine();
         System.out.println("birthday: ");
         String birthday = scanner.nextLine();
-        User user = new User(username, nationalCode, password, birthday);
+        User user = new User(username, nationalCode, nationalCode, birthday); // password is the national code for the first time
         Long id = (Long) session.save(user);
         System.out.println("sign up successfully done!!!\nyour id is:" + id);
-        System.out.println(user);
 
         //====================================
         //transaction commit
@@ -76,10 +92,11 @@ public class ArticleRegisterApplication {
 
     }
 
-    public boolean login() {
+    public User login() {
         Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
         boolean isLogin = false;
+        User user = null;
 
         //get session
         Session session = sessionFactory.openSession();
@@ -96,16 +113,20 @@ public class ArticleRegisterApplication {
         List dbPassword = session.createQuery("select password from User where username = :username")
                 .setParameter("username", username)
                 .list();
+        List users = session.createQuery("from User where username= :username")
+                .setParameter("username", username)
+                .list();
 
-        if (dbPassword.size() == 1 && password.equals(dbPassword.get(0))) {
-            isLogin = true;
+        if (users.size() == 1 && password.equals(dbPassword.get(0))) {
+            user = (User) users.get(0);
         }
 
         //====================================
         //transaction commit
         session.getTransaction().commit();
         session.close();
-        return isLogin;
+        //return isLogin;
+        return user;
     }
 
     public void showAllArticles() {
@@ -168,7 +189,7 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+
         //====================================
         //transaction commit
         session.getTransaction().commit();
@@ -184,7 +205,13 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        List list = session.createQuery("select title from Category")
+                .list();
+        System.out.println("\nCATEGORY TITLES\n==========================================");
+        for (Object title : list) {
+            System.out.println(title);
+        }
+        System.out.println("==========================================");
 
         //====================================
         //transaction commit
@@ -240,7 +267,8 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void changePassword() {
+    public void changePassword(String username) {
+        Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -248,8 +276,24 @@ public class ArticleRegisterApplication {
         //transaction start
         session.beginTransaction();
         //====================================
-        //todo
+        System.out.println("enter new password(at least 4 characters): ");
+        String newPassword = scanner.nextLine();
+        if (newPassword.length() >= 4) {
+            System.out.println("enter new password again: ");
+            String newPasswordAgain = scanner.nextLine();
 
+            if (newPassword.equals(newPasswordAgain)) {
+                Query query = session.createQuery("update User set password = :password where username=:username");
+                query.setParameter("password", newPassword);
+                query.setParameter("username", username);
+                query.executeUpdate();
+                System.out.println("password changed successfully !!!");
+            } else {
+                System.out.println("invalid password !!!");
+            }
+        } else {
+            System.out.println("new password is too short !!!");
+        }
         //====================================
         //transaction commit
         session.getTransaction().commit();
