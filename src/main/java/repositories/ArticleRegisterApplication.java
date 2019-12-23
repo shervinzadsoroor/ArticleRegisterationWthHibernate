@@ -24,7 +24,7 @@ public class ArticleRegisterApplication {
         User user = null;
         while (true) {
             if (user == null) {
-                System.out.println("what do you want? (sign up | login | show articles): ");
+                System.out.println("what do you want? ( sign up | login | show articles ): ");
                 command = scanner.nextLine();
                 if (command.equalsIgnoreCase("sign up")) {
                     articleRegisterApplication.signUp();
@@ -42,7 +42,7 @@ public class ArticleRegisterApplication {
                 }
             }
             if (user != null) {
-                System.out.println("what do you want? (show | edit | new | change pass | dashboard | logout): ");
+                System.out.println("what do you want? ( show | edit | new | change pass | dashboard | logout ): ");
                 command = scanner.nextLine();
 
                 if (command.equalsIgnoreCase("show")) {
@@ -52,6 +52,12 @@ public class ArticleRegisterApplication {
 
                 }
                 if (command.equalsIgnoreCase("new")) {
+                    articleRegisterApplication.showListOfCategories();
+                    System.out.println("select category option ( new | existing ): ");
+                    String catOption = scanner.nextLine();
+                    if (catOption.equalsIgnoreCase("new")) {
+                        articleRegisterApplication.creatNewCategory();
+                    }
                     articleRegisterApplication.showListOfCategories();
                     articleRegisterApplication.createNewArticle(user);
                 }
@@ -207,6 +213,7 @@ public class ArticleRegisterApplication {
             for (Object obj : categoryIds) {
                 if (obj == category_id) {
                     isCategoryExist = true;
+                    break;
                 }
             }
             if (!isCategoryExist) {
@@ -214,11 +221,11 @@ public class ArticleRegisterApplication {
             }
         }
         //end of validating ==============================================
-        System.out.println("title: ");
+        System.out.println(" article title: ");
         String title = scanner.nextLine();
-        System.out.println("brief: ");
+        System.out.println("article brief: ");
         String brief = scanner.nextLine();
-        System.out.println("content: ");
+        System.out.println("article content: ");
         String content = scanner.nextLine();
         String createDate = currentDate();
         String isPublished = "no";
@@ -266,6 +273,7 @@ public class ArticleRegisterApplication {
     }
 
     public void creatNewCategory() {
+        Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -274,7 +282,14 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        System.out.println("category title: ");
+        String title = scanner.nextLine();
+        System.out.println("category description: ");
+        String description = scanner.nextLine();
+
+        Category category = new Category(title, description);
+        session.save(category); // insert into category
+
         //====================================
         //transaction commit
         session.getTransaction().commit();
