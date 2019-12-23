@@ -25,11 +25,11 @@ public class Article {
     @Column(name = "lastUpdateDate", nullable = false, length = 10)
     private String lastUpdateDate;
 
-    @Column(name = "publishDate", nullable = false, length = 10)
+    @Column(name = "publishDate", length = 10)
     private String publishDate;
 
     @Column(name = "isPublished", nullable = false)
-    private boolean isPublished;
+    private String isPublished;
 
     @ManyToOne
     private User user;
@@ -41,8 +41,16 @@ public class Article {
     public Article() {
     }
 
+    public Article(String title, String brief, String content) {
+        this.title = title;
+        this.brief = brief;
+        this.content = content;
+
+    }
+
+
     public Article(String title, String brief, String content, String createDate, String lastUpdateDate,
-                   String publishDate, boolean isPublished, User user, Category category) {
+                   String publishDate, String isPublished, User user, Category category) {
         this.title = title;
         this.brief = brief;
         this.content = content;
@@ -113,11 +121,11 @@ public class Article {
         this.publishDate = publishDate;
     }
 
-    public boolean isPublished() {
+    public String isPublished() {
         return isPublished;
     }
 
-    public void setPublished(boolean published) {
+    public void setPublished(String published) {
         isPublished = published;
     }
 

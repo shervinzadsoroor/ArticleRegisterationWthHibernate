@@ -1,11 +1,15 @@
 package repositories;
 
 import confighibernate.HibernateUtil;
+import entities.Article;
+import entities.Category;
 import entities.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
 import javax.persistence.Query;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Scanner;
 
@@ -49,7 +53,7 @@ public class ArticleRegisterApplication {
                 }
                 if (command.equalsIgnoreCase("new")) {
                     articleRegisterApplication.showListOfCategories();
-                    articleRegisterApplication.createNewArticle();
+                    articleRegisterApplication.createNewArticle(user);
                 }
                 if (command.equalsIgnoreCase("change pass")) {
                     articleRegisterApplication.changePassword(user.getUsername());
@@ -180,14 +184,55 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void createNewArticle() {
+    public void createNewArticle(User user) {
+        Scanner scanner = new Scanner(System.in);
+        Scanner scannerLong = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        boolean isCategoryExist = false;
 
         //get session
         Session session = sessionFactory.openSession();
         //transaction start
         session.beginTransaction();
         //====================================
+
+        System.out.println("category id: ");
+        Long category_id = null;
+
+        // validating the category id ====================================
+        while (!isCategoryExist) {
+            category_id = scannerLong.nextLong();
+            List categoryIds = session.createQuery("select id from Category ")
+                    .list();
+            for (Object obj : categoryIds) {
+                if (obj == category_id) {
+                    isCategoryExist = true;
+                }
+            }
+            if (!isCategoryExist) {
+                System.out.println("category not found, enter an existing category id: ");
+            }
+        }
+        //end of validating ==============================================
+        System.out.println("title: ");
+        String title = scanner.nextLine();
+        System.out.println("brief: ");
+        String brief = scanner.nextLine();
+        System.out.println("content: ");
+        String content = scanner.nextLine();
+        String createDate = currentDate();
+        String isPublished = "no";
+        String lastUpdateDate = currentDate();
+
+        List<Category> categoryList = session.createQuery("from Category where id= :id")
+                .setParameter("id", category_id)
+                .list();
+        Category category = categoryList.get(0);
+
+        Article article = new Article(title, brief, content, createDate, lastUpdateDate,
+                null, isPublished, user, category);
+
+        session.save(article); // insert into article
 
 
         //====================================
@@ -205,11 +250,12 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        List list = session.createQuery("select title from Category")
+        List list = session.createQuery("from Category")
                 .list();
         System.out.println("\nCATEGORY TITLES\n==========================================");
         for (Object title : list) {
-            System.out.println(title);
+
+            System.out.println(title.toString());
         }
         System.out.println("==========================================");
 
@@ -410,6 +456,12 @@ public class ArticleRegisterApplication {
         //transaction commit
         session.getTransaction().commit();
         session.close();
+    }
+
+    public static String currentDate() {
+        DateTimeFormatter date = DateTimeFormatter.ofPattern("yyyy/MM/dd");
+        LocalDateTime now = LocalDateTime.now();
+        return date.format(now);
     }
 
 }
