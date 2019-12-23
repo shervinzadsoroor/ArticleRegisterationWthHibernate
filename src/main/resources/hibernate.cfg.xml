@@ -6,7 +6,7 @@
         <property name="hibernate.connection.username">root</property>
         <property name="hibernate.connection.password"></property>
         <property name="hibernate.connection.url">
-            jdbc:mysql://localhost/ArticleRegister?createDatabaseIfNotExist=true
+            jdbc:mysql://localhost/articleregister?createDatabaseIfNotExist=true
         </property>
 
         <property name="hibernate.connection.driver_class">
@@ -22,8 +22,9 @@
         <property name="hibernate.hbm2ddl.auto">update</property>
 
         <!-- Mapping -->
-        <mapping class="ir.maktab.java32.hibernate.projects.hibernateStart.entities.Incident"/>
-        <mapping class="ir.maktab.java32.hibernate.projects.hibernateStart.entities.IncidentComment"/>
+        <mapping class="entities.User"/>
+        <mapping class="entities.Category"/>
+        <mapping class="entities.Article"/>
 
 
     </session-factory>

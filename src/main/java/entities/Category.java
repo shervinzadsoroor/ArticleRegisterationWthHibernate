@@ -3,14 +3,14 @@ package entities;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "Category")
+//@Table(name = "Category")
 public class Category {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY) // auto increment
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "title", nullable = false, length = 50)
+    @Column(name = "title", nullable = false, length = 50, unique = true)
     private String title;
 
     @Column(name = "description", nullable = false, length = 100)

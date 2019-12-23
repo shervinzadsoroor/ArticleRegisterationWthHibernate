@@ -2,6 +2,7 @@ package entities;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "User")
@@ -12,7 +13,7 @@ public class User {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "username", nullable = false, length = 20)
+    @Column(name = "username", nullable = false, length = 20, unique = true)
     private String username;
 
     @Column(name = "nationalCode", nullable = false, length = 10)
@@ -24,20 +25,22 @@ public class User {
     @Column(name = "birthday", length = 10)
     private String birthday;
 
-    @OneToMany(mappedBy = "User")
-    private ArrayList<Article> articles = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<Article> articles = new ArrayList<>();
 
+    public List<Article> getArticles() {
+        return articles;
+    }
     //constructor =======================================
 
     public User() {
     }
 
-    public User(String username, String nationalCode, String password, String birthday, ArrayList<Article> articles) {
+    public User(String username, String nationalCode, String password, String birthday) {
         this.username = username;
         this.nationalCode = nationalCode;
         this.password = password;
         this.birthday = birthday;
-        this.articles = articles;
     }
     // =================================================
 
@@ -81,11 +84,17 @@ public class User {
         this.birthday = birthday;
     }
 
-    public ArrayList<Article> getArticles() {
-        return articles;
-    }
 
-    public void setArticles(ArrayList<Article> articles) {
-        this.articles = articles;
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", nationalCode='" + nationalCode + '\'' +
+                ", password='" + password + '\'' +
+                ", birthday='" + birthday + '\'' +
+//                ", articles=" + articles +
+                '}';
     }
 }
