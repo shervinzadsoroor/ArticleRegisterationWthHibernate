@@ -72,6 +72,7 @@ public class ArticleRegisterApplication {
 
                 //----------------------------------------------------------
 
+
                 if (command.equalsIgnoreCase("edit")) {
                     System.out.println("choose an option: ( edit article | publish | delete )");
                     String articleCommand = scanner.nextLine();
@@ -89,7 +90,7 @@ public class ArticleRegisterApplication {
                     if (articleCommand.equalsIgnoreCase("delete")) {
                         System.out.println("enter article id: ");
                         id = Long.parseLong(scanner.nextLine());
-                        articleRegisterApplication.deleteArticle(id);
+                        articleRegisterApplication.deleteArticle(id); // todo require implementation
                     }
 
                 }
@@ -413,6 +414,7 @@ public class ArticleRegisterApplication {
     }
 
     public void editArticle(Long id) {
+        Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -421,6 +423,34 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
+        boolean isDone = false;
+        System.out.println("enter column's name ( title | brief | content ):");
+        String columnName = scanner.nextLine();
+
+        Article article = session.load(Article.class, id);
+        if (columnName.equalsIgnoreCase("title")) {
+            System.out.println("enter new title: ");
+            String newTitle = scanner.nextLine();
+            article.setTitle(newTitle);
+            isDone = true;
+
+        } else if (columnName.equalsIgnoreCase("brief")) {
+            System.out.println("enter new brief: ");
+            String newBrief = scanner.nextLine();
+            article.setBrief(newBrief);
+            isDone = true;
+        } else if (columnName.equalsIgnoreCase("content")) {
+            System.out.println("enter new content: ");
+            String newContent = scanner.nextLine();
+            article.setContent(newContent);
+            isDone = true;
+        } else {
+            System.out.println("invalid column name !!!");
+        }
+        if (isDone) {
+            article.setLastUpdateDate(currentDate());
+            session.update(article);
+        }
 
         //====================================
         //transaction commit
@@ -453,38 +483,11 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
-        //====================================
-        //transaction commit
-        session.getTransaction().commit();
-        session.close();
-    }
+        Article article = session.load(Article.class, id);
+        article.setPublishDate(currentDate());
+        article.setPublished("yes");
 
-    public void updateLastUpdateDate() {
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-
-        //get session
-        Session session = sessionFactory.openSession();
-        //transaction start
-        session.beginTransaction();
-        //====================================
-        //todo
-
-        //====================================
-        //transaction commit
-        session.getTransaction().commit();
-        session.close();
-    }
-
-    public void updatePublishDate() {
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-
-        //get session
-        Session session = sessionFactory.openSession();
-        //transaction start
-        session.beginTransaction();
-        //====================================
-        //todo
+        session.update(article);
 
         //====================================
         //transaction commit
