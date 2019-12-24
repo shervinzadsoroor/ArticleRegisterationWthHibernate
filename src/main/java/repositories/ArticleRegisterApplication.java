@@ -7,7 +7,8 @@ import entities.User;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 
-import javax.persistence.Query;
+import org.hibernate.query.Query;
+
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -20,15 +21,20 @@ public class ArticleRegisterApplication {
         ArticleRegisterApplication articleRegisterApplication =
                 new ArticleRegisterApplication();
         String command = null;
-        // boolean isLogin = false;
+
         User user = null;
         while (true) {
             if (user == null) {
-                System.out.println("what do you want? ( sign up | login | show articles ): ");
+                System.out.println("what do you want? ( sign up | login | show articles | show one ): ");
                 command = scanner.nextLine();
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("sign up")) {
                     articleRegisterApplication.signUp();
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("login")) {
                     user = articleRegisterApplication.login();
                     if (user != null) {
@@ -37,20 +43,59 @@ public class ArticleRegisterApplication {
                         System.out.println("    INVALID USERNAME OR PASSWORD !!!");
                     }
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("show articles")) {
                     articleRegisterApplication.showAllArticles();
                 }
+
+                //----------------------------------------------------------
+
+                if (command.equalsIgnoreCase("show one")) {
+                    System.out.println("enter article id :");
+                    Long id = Long.parseLong(scanner.nextLine());
+                    articleRegisterApplication.showSpecificArticle(id);
+                }
+
+                //----------------------------------------------------------
             }
             if (user != null) {
                 System.out.println("what do you want? ( show | edit | new | change pass | dashboard | logout ): ");
                 command = scanner.nextLine();
 
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("show")) {
-
+                    articleRegisterApplication.showUserArticlesAfterLogin(user.getId());
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("edit")) {
+                    System.out.println("choose an option: ( edit article | publish | delete )");
+                    String articleCommand = scanner.nextLine();
+                    Long id;
+                    if (articleCommand.equalsIgnoreCase("edit article")) {
+                        System.out.println("enter article id: ");
+                        id = Long.parseLong(scanner.nextLine());
+                        articleRegisterApplication.editArticle(id);
+                    }
+                    if (articleCommand.equalsIgnoreCase("publish")) {
+                        System.out.println("enter article id: ");
+                        id = Long.parseLong(scanner.nextLine());
+                        articleRegisterApplication.publishArticle(id);
+                    }
+                    if (articleCommand.equalsIgnoreCase("delete")) {
+                        System.out.println("enter article id: ");
+                        id = Long.parseLong(scanner.nextLine());
+                        articleRegisterApplication.deleteArticle(id);
+                    }
 
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("new")) {
                     articleRegisterApplication.showListOfCategories();
                     System.out.println("select category option ( new | existing ): ");
@@ -61,15 +106,26 @@ public class ArticleRegisterApplication {
                     articleRegisterApplication.showListOfCategories();
                     articleRegisterApplication.createNewArticle(user);
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("change pass")) {
                     articleRegisterApplication.changePassword(user.getUsername());
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("dashboard")) {
 
                 }
+
+                //----------------------------------------------------------
+
                 if (command.equalsIgnoreCase("logout")) {
                     user = null;
                 }
+
+                //----------------------------------------------------------
             }
 
         }
@@ -148,7 +204,14 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        Query query = session.createQuery("from Article ");
+        List<Article> articleList = query.list();
+        System.out.printf("\n%-5s%-20s%-30s\n%s\n", "id", "title", "brief",
+                "==================================================================");
+        for (Article article : articleList) {
+            article.printBrief();
+        }
+        System.out.println("==================================================================");
 
         //====================================
         //transaction commit
@@ -156,7 +219,7 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void showSpecificArticle() {
+    public void showSpecificArticle(Long id) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -165,7 +228,15 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        List list = session.createQuery("from Article where id=:id")
+                .setParameter("id", id)
+                .list();
+        System.out.println("\n" +
+                " Article\n==========================================");
+
+        System.out.println(list.get(0).toString());
+
+        System.out.println("==========================================");
 
         //====================================
         //transaction commit
@@ -173,7 +244,7 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void showUserArticlesAfterLogin() {
+    public void showUserArticlesAfterLogin(Long id) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -182,7 +253,19 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        List list = session.createQuery("from Article where user.id=:id")
+                .setParameter("id", id)
+                .list();
+        if (list.size() > 0) {
+            System.out.println("\n" +
+                    " Article\n==========================================");
+            for (Object article : list) {
+                System.out.println(article.toString());
+            }
+            System.out.println("==========================================");
+        } else {
+            System.out.println("NO ARTICLES FOUND");
+        }
 
         //====================================
         //transaction commit
@@ -296,38 +379,6 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void edit() {
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-
-        //get session
-        Session session = sessionFactory.openSession();
-        //transaction start
-        session.beginTransaction();
-        //====================================
-
-        //todo
-        //====================================
-        //transaction commit
-        session.getTransaction().commit();
-        session.close();
-    }
-
-    public void editArticle() {
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-
-        //get session
-        Session session = sessionFactory.openSession();
-        //transaction start
-        session.beginTransaction();
-        //====================================
-
-        //todo
-        //====================================
-        //transaction commit
-        session.getTransaction().commit();
-        session.close();
-    }
-
     public void changePassword(String username) {
         Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
@@ -361,7 +412,23 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void deleteArticle() {
+    public void editArticle(Long id) {
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+
+        //get session
+        Session session = sessionFactory.openSession();
+        //transaction start
+        session.beginTransaction();
+        //====================================
+
+
+        //====================================
+        //transaction commit
+        session.getTransaction().commit();
+        session.close();
+    }
+
+    public void deleteArticle(Long id) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -377,7 +444,7 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void publishArticle() {
+    public void publishArticle(Long id) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session

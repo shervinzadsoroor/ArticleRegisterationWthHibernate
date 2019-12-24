@@ -160,4 +160,9 @@ public class Article {
                 ", category=" + category +
                 '}';
     }
+
+
+    public void printBrief(){
+        System.out.printf("%-5d%-20s%-30s\n",id,title,brief);
+    }
 }
