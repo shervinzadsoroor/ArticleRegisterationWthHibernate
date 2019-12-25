@@ -35,7 +35,7 @@ public class ArticleRegisterApplication {
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("login")) {
+                else if (command.equalsIgnoreCase("login")) {
                     user = articleRegisterApplication.login();
                     if (user != null) {
                         System.out.println("    LOGIN SUCCESSFUL !!!");
@@ -46,16 +46,18 @@ public class ArticleRegisterApplication {
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("show articles")) {
+                else if (command.equalsIgnoreCase("show articles")) {
                     articleRegisterApplication.showAllArticles();
                 }
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("show one")) {
+                else if (command.equalsIgnoreCase("show one")) {
                     System.out.println("enter article id :");
                     Long id = Long.parseLong(scanner.nextLine());
                     articleRegisterApplication.showSpecificArticle(id);
+                } else {
+                    System.out.println("wrong command !!!");
                 }
 
                 //----------------------------------------------------------
@@ -73,57 +75,69 @@ public class ArticleRegisterApplication {
                 //----------------------------------------------------------
 
 
-                if (command.equalsIgnoreCase("edit")) {
+                else if (command.equalsIgnoreCase("edit") &&
+                        articleRegisterApplication.isUserHasArticle(user.getId())) {
                     System.out.println("choose an option: ( edit article | publish | delete )");
                     String articleCommand = scanner.nextLine();
                     Long id;
                     if (articleCommand.equalsIgnoreCase("edit article")) {
                         System.out.println("enter article id: ");
                         id = Long.parseLong(scanner.nextLine());
-                        articleRegisterApplication.editArticle(id);
+                        articleRegisterApplication.editArticle(id, user);
                     }
                     if (articleCommand.equalsIgnoreCase("publish")) {
                         System.out.println("enter article id: ");
                         id = Long.parseLong(scanner.nextLine());
-                        articleRegisterApplication.publishArticle(id);
+                        articleRegisterApplication.publishArticle(id, user);
                     }
                     if (articleCommand.equalsIgnoreCase("delete")) {
                         System.out.println("enter article id: ");
                         id = Long.parseLong(scanner.nextLine());
-                        articleRegisterApplication.deleteArticle(id); // todo require implementation
+                        articleRegisterApplication.deleteArticle(id, user);
                     }
 
                 }
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("new")) {
+                else if (command.equalsIgnoreCase("new")) {
                     articleRegisterApplication.showListOfCategories();
                     System.out.println("select category option ( new | existing ): ");
                     String catOption = scanner.nextLine();
                     if (catOption.equalsIgnoreCase("new")) {
                         articleRegisterApplication.creatNewCategory();
+                        articleRegisterApplication.showListOfCategories();
+                        articleRegisterApplication.createNewArticle(user);
+                    } else if (catOption.equalsIgnoreCase("existing")) {
+                        articleRegisterApplication.createNewArticle(user);
+                    } else {
+                        System.out.println("wrong command !!!");
                     }
-                    articleRegisterApplication.showListOfCategories();
-                    articleRegisterApplication.createNewArticle(user);
+
                 }
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("change pass")) {
+                else if (command.equalsIgnoreCase("change pass")) {
                     articleRegisterApplication.changePassword(user.getUsername());
                 }
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("dashboard")) {
+                else if (command.equalsIgnoreCase("dashboard")) {
+                    System.out.println("quantity of your articles: " +
+                            articleRegisterApplication.countOfAllArticlesOfUser(user));
 
+                    System.out.println("quantity of your published articles: " +
+                            articleRegisterApplication.countOfPublishedArticles(user));
                 }
 
                 //----------------------------------------------------------
 
-                if (command.equalsIgnoreCase("logout")) {
+                else if (command.equalsIgnoreCase("logout")) {
                     user = null;
+                } else {
+                    System.out.println("wrong command !!!");
                 }
 
                 //----------------------------------------------------------
@@ -232,13 +246,16 @@ public class ArticleRegisterApplication {
         List list = session.createQuery("from Article where id=:id")
                 .setParameter("id", id)
                 .list();
-        System.out.println("\n" +
-                " Article\n==========================================");
+        if (list.size() > 0) {
+            System.out.println("\n" +
+                    " Article\n==========================================");
 
-        System.out.println(list.get(0).toString());
+            System.out.println(list.get(0).toString());
 
-        System.out.println("==========================================");
-
+            System.out.println("==========================================");
+        } else {
+            System.out.println("id not found !!!");
+        }
         //====================================
         //transaction commit
         session.getTransaction().commit();
@@ -305,7 +322,7 @@ public class ArticleRegisterApplication {
             }
         }
         //end of validating ==============================================
-        System.out.println(" article title: ");
+        System.out.println("article title: ");
         String title = scanner.nextLine();
         System.out.println("article brief: ");
         String brief = scanner.nextLine();
@@ -413,7 +430,7 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void editArticle(Long id) {
+    public void editArticle(Long id, User user) {
         Scanner scanner = new Scanner(System.in);
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
@@ -424,32 +441,51 @@ public class ArticleRegisterApplication {
         //====================================
 
         boolean isDone = false;
-        System.out.println("enter column's name ( title | brief | content ):");
-        String columnName = scanner.nextLine();
+        boolean isIdExist = false;
 
+        List<Long> idList = session.createQuery("select id from Article ")
+                .list();
+        for (Long articleId : idList) {
+            if (id == articleId) {
+                isIdExist = true;
+            }
+        }
+        //checking the validation of the article's id
         Article article = session.load(Article.class, id);
-        if (columnName.equalsIgnoreCase("title")) {
-            System.out.println("enter new title: ");
-            String newTitle = scanner.nextLine();
-            article.setTitle(newTitle);
-            isDone = true;
+        if (isIdExist) {
+            if (article.getUser().getId() == user.getId()) {
 
-        } else if (columnName.equalsIgnoreCase("brief")) {
-            System.out.println("enter new brief: ");
-            String newBrief = scanner.nextLine();
-            article.setBrief(newBrief);
-            isDone = true;
-        } else if (columnName.equalsIgnoreCase("content")) {
-            System.out.println("enter new content: ");
-            String newContent = scanner.nextLine();
-            article.setContent(newContent);
-            isDone = true;
+                System.out.println("enter column's name ( title | brief | content ):");
+                String columnName = scanner.nextLine();
+
+                if (columnName.equalsIgnoreCase("title")) {
+                    System.out.println("enter new title: ");
+                    String newTitle = scanner.nextLine();
+                    article.setTitle(newTitle);
+                    isDone = true;
+
+                } else if (columnName.equalsIgnoreCase("brief")) {
+                    System.out.println("enter new brief: ");
+                    String newBrief = scanner.nextLine();
+                    article.setBrief(newBrief);
+                    isDone = true;
+                } else if (columnName.equalsIgnoreCase("content")) {
+                    System.out.println("enter new content: ");
+                    String newContent = scanner.nextLine();
+                    article.setContent(newContent);
+                    isDone = true;
+                } else {
+                    System.out.println("invalid column name !!!");
+                }
+                if (isDone) {
+                    article.setLastUpdateDate(currentDate());
+                    session.update(article);
+                }
+            } else {
+                System.out.println("THE ARTICLE IS NOT YOURS !!!");
+            }
         } else {
-            System.out.println("invalid column name !!!");
-        }
-        if (isDone) {
-            article.setLastUpdateDate(currentDate());
-            session.update(article);
+            System.out.println("ID NOT FOUND !!!");
         }
 
         //====================================
@@ -458,7 +494,7 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void deleteArticle(Long id) {
+    public void deleteArticle(Long id, User user) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -466,28 +502,25 @@ public class ArticleRegisterApplication {
         //transaction start
         session.beginTransaction();
         //====================================
+        boolean isIdExist = false;
 
-        //todo
-        //====================================
-        //transaction commit
-        session.getTransaction().commit();
-        session.close();
-    }
-
-    public void publishArticle(Long id) {
-        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-
-        //get session
-        Session session = sessionFactory.openSession();
-        //transaction start
-        session.beginTransaction();
-        //====================================
-
+        List<Long> idList = session.createQuery("select id from Article ")
+                .list();
+        for (Long articleId : idList) {
+            if (id == articleId) {
+                isIdExist = true;
+            }
+        }
         Article article = session.load(Article.class, id);
-        article.setPublishDate(currentDate());
-        article.setPublished("yes");
-
-        session.update(article);
+        if (isIdExist) {
+            if (article.getUser().getId() == user.getId()) {
+                session.remove(article);
+            } else {
+                System.out.println("THE ARTICLE IS NOT YOURS !!!");
+            }
+        } else {
+            System.out.println("ID NOT FOUND !!!");
+        }
 
         //====================================
         //transaction commit
@@ -495,7 +528,46 @@ public class ArticleRegisterApplication {
         session.close();
     }
 
-    public void dashboard() {
+    public void publishArticle(Long id, User user) {
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+
+        //get session
+        Session session = sessionFactory.openSession();
+        //transaction start
+        session.beginTransaction();
+        //====================================
+        boolean isIdExist = false;
+
+        List<Long> idList = session.createQuery("select id from Article ")
+                .list();
+        for (Long articleId : idList) {
+            if (id == articleId) {
+                isIdExist = true;
+            }
+        }
+        Article article = session.load(Article.class, id);
+        if (isIdExist) {
+            if (article.getUser().getId() == user.getId()) {
+
+                article.setPublishDate(currentDate());
+                article.setLastUpdateDate(currentDate());
+                article.setPublished("yes");
+
+                session.update(article);
+            } else {
+                System.out.println("THE ARTICLE IS NOT YOURS !!!");
+            }
+        } else {
+            System.out.println("ID NOT FOUND !!!");
+        }
+        //====================================
+        //transaction commit
+        session.getTransaction().commit();
+        session.close();
+
+    }
+
+    public Long countOfAllArticlesOfUser(User user) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -504,14 +576,18 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        Query query = session.createQuery("select count(id) from Article  where user.id=:id")
+                .setParameter("id", user.getId());
+        Long count = (Long) query.uniqueResult();
+
         //====================================
         //transaction commit
         session.getTransaction().commit();
         session.close();
+        return count;
     }
 
-    public void countOfAllArticles() {
+    public Long countOfPublishedArticles(User user) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -520,14 +596,18 @@ public class ArticleRegisterApplication {
         session.beginTransaction();
         //====================================
 
-        //todo
+        Query query = session.createQuery("select count(id) from Article  where user.id=:id and isPublished='yes'")
+                .setParameter("id", user.getId());
+        Long count = (Long) query.uniqueResult();
+
         //====================================
         //transaction commit
         session.getTransaction().commit();
         session.close();
+        return count;
     }
 
-    public void countOfPublishedArticles() {
+    public boolean isUserHasArticle(Long id) {
         SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 
         //get session
@@ -535,12 +615,22 @@ public class ArticleRegisterApplication {
         //transaction start
         session.beginTransaction();
         //====================================
-        //todo
+        boolean bool = false;
+
+        List list = session.createQuery("from Article where user.id=:id")
+                .setParameter("id", id)
+                .list();
+        if (list.size() > 0) {
+            bool = true;
+        } else {
+            System.out.println("NO ARTICLES FOUND TO EDIT !!!");
+        }
 
         //====================================
         //transaction commit
         session.getTransaction().commit();
         session.close();
+        return bool;
     }
 
     public static String currentDate() {
