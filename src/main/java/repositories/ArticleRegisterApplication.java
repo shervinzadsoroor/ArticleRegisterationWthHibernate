@@ -63,7 +63,7 @@ public class ArticleRegisterApplication {
                 //----------------------------------------------------------
             }
             if (user != null) {
-                System.out.println("what do you want? ( show | edit | new | change pass | dashboard | logout ): ");
+                System.out.println("what do you want? ( show | edit | new | change pass | dashboard | search | logout ): ");
                 command = scanner.nextLine();
 
                 //----------------------------------------------------------
@@ -130,6 +130,13 @@ public class ArticleRegisterApplication {
 
                     System.out.println("quantity of your published articles: " +
                             articleRegisterApplication.countOfPublishedArticles(user));
+                }
+                //----------------------------------------------------------
+
+                else if (command.equalsIgnoreCase("search")) {
+                    System.out.println("enter title for search: ");
+                    String title = scanner.nextLine();
+                    articleRegisterApplication.search(title);
                 }
 
                 //----------------------------------------------------------
@@ -631,6 +638,41 @@ public class ArticleRegisterApplication {
         session.getTransaction().commit();
         session.close();
         return bool;
+    }
+
+    public void search(String title) {
+        SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+
+        //get session
+        Session session = sessionFactory.openSession();
+        //transaction start
+        session.beginTransaction();
+        //====================================
+        boolean isTitleExist = false;
+
+        List articles1 = session.createQuery("select title from Article")
+                .list();
+        for (Object obj : articles1) {
+            if (obj.equals(title)) {
+                isTitleExist = true;
+            }
+        }
+        if (isTitleExist) {
+            List<Article> articles2 = session.createQuery("from Article where title=:titleName")
+                    .setParameter("titleName", title)
+                    .list();
+
+            for (Article article : articles2) {
+                System.out.println(article.toString());
+            }
+        } else {
+            System.out.println("TITLE NOT FOUND !!!");
+        }
+
+        //====================================
+        //transaction commit
+        session.getTransaction().commit();
+        session.close();
     }
 
     public static String currentDate() {
